@@ -498,6 +498,7 @@ struct ProvidersPane: View {
         let weeklyPace = snapshot?.secondary.flatMap { window in
             self.store.weeklyPace(provider: provider, window: window, now: now)
         }
+        let burnRate = self.store.burnRate(for: provider)
         let input = UsageMenuCardView.Model.Input(
             provider: provider,
             metadata: metadata,
@@ -517,6 +518,7 @@ struct ProvidersPane: View {
             showOptionalCreditsAndExtraUsage: self.settings.showOptionalCreditsAndExtraUsage,
             hidePersonalInfo: self.settings.hidePersonalInfo,
             weeklyPace: weeklyPace,
+            burnRate: burnRate,
             now: now)
         return UsageMenuCardView.Model.make(input)
     }

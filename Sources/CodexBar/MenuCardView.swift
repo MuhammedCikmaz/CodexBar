@@ -1270,11 +1270,7 @@ extension UsageMenuCardView.Model {
             return "Last 30 days: \(monthCost)"
         }()
         let err = (error?.isEmpty ?? true) ? nil : error
-        let burnRateLine: String? = if let burnRate, burnRate > 0 {
-            "Burn rate: \(UsageFormatter.burnRateString(burnRate))"
-        } else {
-            nil
-        }
+        let burnRateLine = "Burn rate: \(UsageFormatter.burnRateString(max(0, burnRate ?? 0)))"
         return TokenUsageSection(
             sessionLine: sessionLine,
             monthLine: monthLine,

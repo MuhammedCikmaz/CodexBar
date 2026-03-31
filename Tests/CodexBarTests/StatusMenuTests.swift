@@ -866,6 +866,48 @@ extension StatusMenuTests {
     }
 
     @Test
+    func `overview tab shows burn rate header when token usage exists but burn rate is zero`() {
+        self.disableMenuCardsForTesting()
+        let settings = self.makeSettings()
+        settings.statusChecksEnabled = false
+        settings.refreshFrequency = .manual
+        settings.mergeIcons = true
+        settings.costUsageEnabled = true
+        settings.selectedMenuProvider = .codex
+        settings.mergedMenuLastSelectedWasOverview = true
+
+        let registry = ProviderRegistry.shared
+        for provider in UsageProvider.allCases {
+            guard let metadata = registry.metadata[provider] else { continue }
+            let shouldEnable = provider == .codex || provider == .cursor
+            settings.setProviderEnabled(provider: provider, metadata: metadata, enabled: shouldEnable)
+        }
+
+        let fetcher = UsageFetcher()
+        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        store._setTokenSnapshotForTesting(CostUsageTokenSnapshot(
+            sessionTokens: 123,
+            sessionCostUSD: 0.12,
+            last30DaysTokens: 456,
+            last30DaysCostUSD: 1.23,
+            daily: [],
+            updatedAt: Date()), provider: .codex)
+        let controller = StatusItemController(
+            store: store,
+            settings: settings,
+            account: fetcher.loadAccountInfo(),
+            updater: DisabledUpdaterController(),
+            preferencesSelection: PreferencesSelection(),
+            statusBar: self.makeStatusBarForTesting())
+
+        let menu = controller.makeMenu()
+        controller.menuWillOpen(menu)
+
+        let ids = self.representedIDs(in: menu)
+        #expect(ids.contains("overviewBurnRateHeader"))
+    }
+
+    @Test
     func `overview tab honors stored subset when three or fewer`() {
         self.disableMenuCardsForTesting()
         let settings = self.makeSettings()

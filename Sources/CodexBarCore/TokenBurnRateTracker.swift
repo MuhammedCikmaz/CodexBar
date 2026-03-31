@@ -57,7 +57,7 @@ public final class TokenBurnRateTracker: @unchecked Sendable {
         guard let ring = self.samples[provider], ring.count >= 2 else { return nil }
 
         var activeSeconds: TimeInterval = 0
-        var activeTokens: Int = 0
+        var activeTokens = 0
         var activeIntervals = 0
 
         for i in 1..<ring.count {

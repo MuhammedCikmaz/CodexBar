@@ -118,7 +118,7 @@ public enum UsageFormatter {
     /// Formats a tokens-per-hour burn rate for display (e.g., "12.3K tok/hr").
     public static func burnRateString(_ tokensPerHour: Double) -> String {
         let tokenCount = Int(tokensPerHour.rounded())
-        return "\(tokenCountString(tokenCount)) tok/hr"
+        return "\(self.tokenCountString(tokenCount)) tok/hr"
     }
 
     public static func tokenCountString(_ value: Int) -> String {

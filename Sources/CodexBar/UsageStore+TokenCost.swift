@@ -11,7 +11,8 @@ extension UsageStore {
     }
 
     func burnRate(for provider: UsageProvider) -> Double? {
-        self.burnRateTracker.tokensPerHour(for: provider)
+        guard self.tokenSnapshots[provider] != nil else { return nil }
+        return max(0, self.burnRateTracker.tokensPerHour(for: provider) ?? 0)
     }
 
     func tokenLastAttemptAt(for provider: UsageProvider) -> Date? {
