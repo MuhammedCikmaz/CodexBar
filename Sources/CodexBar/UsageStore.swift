@@ -101,6 +101,7 @@ final class UsageStore {
     var lastFetchAttempts: [UsageProvider: [ProviderFetchAttempt]] = [:]
     var accountSnapshots: [UsageProvider: [TokenAccountUsageSnapshot]] = [:]
     var tokenSnapshots: [UsageProvider: CostUsageTokenSnapshot] = [:]
+    @ObservationIgnored let burnRateTracker = TokenBurnRateTracker()
     var tokenErrors: [UsageProvider: String] = [:]
     var tokenRefreshInFlight: Set<UsageProvider> = []
     var credits: CreditsSnapshot?
@@ -1095,6 +1096,7 @@ extension UsageStore {
         guard errorMessage == nil else { return errorMessage }
 
         self.tokenSnapshots.removeAll()
+        self.burnRateTracker.resetAll()
         self.tokenErrors.removeAll()
         self.lastTokenFetchAt.removeAll()
         self.tokenFailureGates[.codex]?.reset()
@@ -1105,6 +1107,7 @@ extension UsageStore {
     private func refreshTokenUsage(_ provider: UsageProvider, force: Bool) async {
         guard provider == .codex || provider == .claude || provider == .vertexai else {
             self.tokenSnapshots.removeValue(forKey: provider)
+            self.burnRateTracker.reset(provider: provider)
             self.tokenErrors[provider] = nil
             self.tokenFailureGates[provider]?.reset()
             self.lastTokenFetchAt.removeValue(forKey: provider)
@@ -1113,6 +1116,7 @@ extension UsageStore {
 
         guard self.settings.costUsageEnabled else {
             self.tokenSnapshots.removeValue(forKey: provider)
+            self.burnRateTracker.reset(provider: provider)
             self.tokenErrors[provider] = nil
             self.tokenFailureGates[provider]?.reset()
             self.lastTokenFetchAt.removeValue(forKey: provider)
@@ -1121,6 +1125,7 @@ extension UsageStore {
 
         guard self.isEnabled(provider) else {
             self.tokenSnapshots.removeValue(forKey: provider)
+            self.burnRateTracker.reset(provider: provider)
             self.tokenErrors[provider] = nil
             self.tokenFailureGates[provider]?.reset()
             self.lastTokenFetchAt.removeValue(forKey: provider)
@@ -1172,6 +1177,7 @@ extension UsageStore {
 
             guard !snapshot.daily.isEmpty else {
                 self.tokenSnapshots.removeValue(forKey: provider)
+                self.burnRateTracker.reset(provider: provider)
                 self.tokenErrors[provider] = Self.tokenCostNoDataMessage(for: provider)
                 self.tokenFailureGates[provider]?.recordSuccess()
                 return
@@ -1187,6 +1193,9 @@ extension UsageStore {
                 "30d=\(monthCost)"
             self.tokenCostLogger.info(message)
             self.tokenSnapshots[provider] = snapshot
+            if let sessionTokens = snapshot.sessionTokens {
+                self.burnRateTracker.record(provider: provider, sessionTokens: sessionTokens, at: snapshot.updatedAt)
+            }
             self.tokenErrors[provider] = nil
             self.tokenFailureGates[provider]?.recordSuccess()
             self.persistWidgetSnapshot(reason: "token-usage")
@@ -1203,6 +1212,7 @@ extension UsageStore {
             if shouldSurface {
                 self.tokenErrors[provider] = error.localizedDescription
                 self.tokenSnapshots.removeValue(forKey: provider)
+                self.burnRateTracker.reset(provider: provider)
             } else {
                 self.tokenErrors[provider] = nil
             }

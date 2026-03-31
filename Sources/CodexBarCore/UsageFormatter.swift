@@ -115,6 +115,12 @@ public enum UsageFormatter {
         value.formatted(.currency(code: currencyCode).locale(Locale(identifier: "en_US")))
     }
 
+    /// Formats a tokens-per-hour burn rate for display (e.g., "12.3K tok/hr").
+    public static func burnRateString(_ tokensPerHour: Double) -> String {
+        let tokenCount = Int(tokensPerHour.rounded())
+        return "\(tokenCountString(tokenCount)) tok/hr"
+    }
+
     public static func tokenCountString(_ value: Int) -> String {
         let absValue = abs(value)
         let sign = value < 0 ? "-" : ""

@@ -10,6 +10,10 @@ extension UsageStore {
         self.tokenErrors[provider]
     }
 
+    func burnRate(for provider: UsageProvider) -> Double? {
+        self.burnRateTracker.tokensPerHour(for: provider)
+    }
+
     func tokenLastAttemptAt(for provider: UsageProvider) -> Date? {
         self.lastTokenFetchAt[provider]
     }

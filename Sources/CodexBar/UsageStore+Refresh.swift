@@ -26,6 +26,7 @@ extension UsageStore {
                 self.lastFetchAttempts.removeValue(forKey: provider)
                 self.accountSnapshots.removeValue(forKey: provider)
                 self.tokenSnapshots.removeValue(forKey: provider)
+                self.burnRateTracker.reset(provider: provider)
                 self.tokenErrors[provider] = nil
                 self.failureGates[provider]?.reset()
                 self.tokenFailureGates[provider]?.reset()
@@ -72,6 +73,7 @@ extension UsageStore {
                 self.lastFetchAttempts.removeValue(forKey: .claude)
                 self.accountSnapshots.removeValue(forKey: .claude)
                 self.tokenSnapshots.removeValue(forKey: .claude)
+                self.burnRateTracker.reset(provider: .claude)
                 self.tokenErrors[.claude] = nil
                 self.failureGates[.claude]?.reset()
                 self.tokenFailureGates[.claude]?.reset()

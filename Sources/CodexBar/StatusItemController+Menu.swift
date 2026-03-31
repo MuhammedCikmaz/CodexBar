@@ -391,6 +391,19 @@ extension StatusItemController {
             }
         guard !rows.isEmpty else { return false }
 
+        // Aggregate burn rate header at top of overview
+        let burnRates: [(UsageProvider, Double)] = overviewProviders.compactMap { provider in
+            guard let rate = self.store.burnRate(for: provider), rate > 0 else { return nil }
+            return (provider, rate)
+        }
+        if !burnRates.isEmpty {
+            let headerItem = self.makeOverviewBurnRateHeader(
+                burnRates: burnRates,
+                width: menuWidth)
+            menu.addItem(headerItem)
+            menu.addItem(.separator())
+        }
+
         for (index, row) in rows.enumerated() {
             let identifier = "\(Self.overviewRowIdentifierPrefix)\(row.provider.rawValue)"
             let item = self.makeMenuCardItem(
@@ -410,6 +423,19 @@ extension StatusItemController {
             }
         }
         return true
+    }
+
+    private func makeOverviewBurnRateHeader(
+        burnRates: [(UsageProvider, Double)],
+        width: CGFloat) -> NSMenuItem
+    {
+        let view = OverviewBurnRateHeaderView(burnRates: burnRates, width: width)
+        let hostingView = NSHostingView(rootView: view)
+        hostingView.frame = NSRect(x: 0, y: 0, width: width, height: 44)
+        let item = NSMenuItem()
+        item.view = hostingView
+        item.representedObject = "overviewBurnRateHeader"
+        return item
     }
 
     private func addOverviewEmptyState(to menu: NSMenu, enabledProviders: [UsageProvider]) {
@@ -1566,6 +1592,7 @@ extension StatusItemController {
         let weeklyPace = snapshot?.secondary.flatMap { window in
             self.store.weeklyPace(provider: target, window: window, now: now)
         }
+        let burnRate = self.store.burnRate(for: target)
         let input = UsageMenuCardView.Model.Input(
             provider: target,
             metadata: metadata,
@@ -1587,6 +1614,7 @@ extension StatusItemController {
             kiloAutoMode: kiloAutoMode,
             hidePersonalInfo: self.settings.hidePersonalInfo,
             weeklyPace: weeklyPace,
+            burnRate: burnRate,
             now: now)
         return UsageMenuCardView.Model.make(input)
     }

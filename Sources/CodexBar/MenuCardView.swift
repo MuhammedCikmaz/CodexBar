@@ -77,6 +77,7 @@ struct UsageMenuCardView: View {
         struct TokenUsageSection {
             let sessionLine: String
             let monthLine: String
+            let burnRateLine: String?
             let hintLine: String?
             let errorLine: String?
             let errorCopyText: String?
@@ -182,6 +183,11 @@ struct UsageMenuCardView: View {
                                 .fontWeight(.medium)
                             Text(tokenUsage.sessionLine)
                                 .font(.footnote)
+                            if let burnRate = tokenUsage.burnRateLine {
+                                Text(burnRate)
+                                    .font(.system(size: 11))
+                                    .foregroundColor(.secondary)
+                            }
                             Text(tokenUsage.monthLine)
                                 .font(.footnote)
                             if let hint = tokenUsage.hintLine, !hint.isEmpty {
@@ -594,6 +600,11 @@ struct UsageMenuCardCostSectionView: View {
                                 .fontWeight(.medium)
                             Text(tokenUsage.sessionLine)
                                 .font(.caption)
+                            if let burnRate = tokenUsage.burnRateLine {
+                                Text(burnRate)
+                                    .font(.system(size: 11))
+                                    .foregroundColor(.secondary)
+                            }
                             Text(tokenUsage.monthLine)
                                 .font(.caption)
                             if let hint = tokenUsage.hintLine, !hint.isEmpty {
@@ -670,6 +681,7 @@ extension UsageMenuCardView.Model {
         let kiloAutoMode: Bool
         let hidePersonalInfo: Bool
         let weeklyPace: UsagePace?
+        let burnRate: Double?
         let now: Date
 
         init(
@@ -693,6 +705,7 @@ extension UsageMenuCardView.Model {
             kiloAutoMode: Bool = false,
             hidePersonalInfo: Bool,
             weeklyPace: UsagePace? = nil,
+            burnRate: Double? = nil,
             now: Date)
         {
             self.provider = provider
@@ -715,6 +728,7 @@ extension UsageMenuCardView.Model {
             self.kiloAutoMode = kiloAutoMode
             self.hidePersonalInfo = hidePersonalInfo
             self.weeklyPace = weeklyPace
+            self.burnRate = burnRate
             self.now = now
         }
     }
@@ -743,7 +757,8 @@ extension UsageMenuCardView.Model {
             provider: input.provider,
             enabled: input.tokenCostUsageEnabled,
             snapshot: input.tokenSnapshot,
-            error: input.tokenError)
+            error: input.tokenError,
+            burnRate: input.burnRate)
         let subtitle = Self.subtitle(
             snapshot: input.snapshot,
             isRefreshing: input.isRefreshing,
@@ -1228,7 +1243,8 @@ extension UsageMenuCardView.Model {
         provider: UsageProvider,
         enabled: Bool,
         snapshot: CostUsageTokenSnapshot?,
-        error: String?) -> TokenUsageSection?
+        error: String?,
+        burnRate: Double?) -> TokenUsageSection?
     {
         guard provider == .codex || provider == .claude || provider == .vertexai else { return nil }
         guard enabled else { return nil }
@@ -1254,9 +1270,15 @@ extension UsageMenuCardView.Model {
             return "Last 30 days: \(monthCost)"
         }()
         let err = (error?.isEmpty ?? true) ? nil : error
+        let burnRateLine: String? = if let burnRate, burnRate > 0 {
+            "Burn rate: \(UsageFormatter.burnRateString(burnRate))"
+        } else {
+            nil
+        }
         return TokenUsageSection(
             sessionLine: sessionLine,
             monthLine: monthLine,
+            burnRateLine: burnRateLine,
             hintLine: nil,
             errorLine: err,
             errorCopyText: (error?.isEmpty ?? true) ? nil : error)
